@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+    <title>IF Network - Meu Perfil</title>
+  </head>
+  <style>
+    #titleClick {
+      cursor: pointer;
+    }
+  </style>
+  <body>
+    <header>
+      <img
+        src="{{ url_for('static', filename='images/logo.png') }}"
+        alt="Logo"
+      />
+      <h1 onclick="redirecionar('/home')" id="titleClick">IF Network</h1>
+      <div class="header-actions">
+        <button id="perfil-header" onclick="redirecionar('/perfil')">
+          <span class="material-symbols-outlined"> account_circle </span>
+        </button>
+        <button id="perguntar-header" onclick="redirecionar('/pergunta')">
+          +
+        </button>
+      </div>
+    </header>
+
+    <div class="perfil-parent">
+      <div class="perfil-child">
+        <div class="perfil-menu">
+          <div class="perfil-btns">
+            <button onclick="redirecionar('/perfil')">Meu Perfil</button>
+            <button onclick="redirecionar('/minhas_perguntas')">
+              Minhas Perguntas
+            </button>
+            <button onclick="redirecionar('/minhas_respostas')">
+              Minhas Respostas
+            </button>
+          </div>
+          <button id="sair-conta" onclick="sair()">Sair</button>
+        </div>
+        <div class="grid-perfil">
+          <div class="flex-perfil">
+            <span class="material-symbols-outlined" id="conta-icon">
+              account_circle
+            </span>
+            <h1 id="nome-usuario">Carregando...</h1>
+          </div>
+          <div class="dados-usuario">
+            <h1 id="dados-text">Meus dados</h1>
+            <br />
+            <table>
+              <tr>
+                <th>CPF</th>
+                <td id="cpf">Carregando...</td>
+              </tr>
+              <tr>
+                <th>E-mail</th>
+                <td id="email">Carregando...</td>
+              </tr>
+              <tr>
+                <th>Data de nascimento</th>
+                <td id="data-nasc">Carregando...</td>
+              </tr>
+              <tr>
+                <th>Ano de Ingresso</th>
+                <td id="ano-ingresso">Carregando...</td>
+              </tr>
+              <tr>
+                <th>Número de Matrícula</th>
+                <td id="numero-matricula">Carregando...</td>
+              </tr>
+            </table>
+          </div>
+          <button id="perfil-edit" onclick="redirecionar('/editar_dados')">
+            Editar dados
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function redirecionar(url) {
+        window.location.href = url;
+      }
+
+      function formatarData(dataISO) {
+        const partes = dataISO.split(" ");
+        const dia = partes[1];
+        const mes = {
+          Jan: "01",
+          Feb: "02",
+          Mar: "03",
+          Apr: "04",
+          May: "05",
+          Jun: "06",
+          Jul: "07",
+          Aug: "08",
+          Sep: "09",
+          Oct: "10",
+          Nov: "11",
+          Dec: "12",
+        }[partes[2]];
+        const ano = partes[3];
+        return `${dia}/${mes}/${ano}`;
+      }
+
+      function getCookie(nome) {
+        const cookies = document.cookie.split("; ");
+        const cookieEncontrado = cookies.find((cookie) =>
+          cookie.startsWith(`${nome}=`)
+        );
+        return cookieEncontrado ? cookieEncontrado.split("=")[1] : null;
+      }
+
+      const numeroMatricula = getCookie("numero_matricula");
+
+      if (numeroMatricula) {
+        fetch(`/api/usuarios/${numeroMatricula}`)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Erro ao buscar dados do usuário.");
+            }
+            return response.json();
+          })
+          .then((dados) => {
+            document.getElementById("nome-usuario").textContent = dados.nome;
+            document.getElementById("cpf").textContent = dados.cpf;
+            document.getElementById("email").textContent = dados.email;
+            document.getElementById("data-nasc").textContent = formatarData(
+              dados.data_nasc
+            );
+            document.getElementById("ano-ingresso").textContent =
+              dados.data_entrada;
+            document.getElementById("numero-matricula").textContent =
+              dados.numero_matricula;
+          })
+          .catch((error) => {
+            console.error(error);
+            alert("Não foi possível carregar os dados do usuário.");
+          });
+      } else {
+        alert("Número de matrícula não encontrado no cookie.");
+      }
+
+      function sair() {
+        document.cookie.split(";").forEach(function (cookie) {
+          const nome = cookie.split("=")[0].trim();
+          document.cookie = `${nome}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+        });
+
+        window.location.href = "/login";
+      }
+    </script>
+  </body>
+</html>

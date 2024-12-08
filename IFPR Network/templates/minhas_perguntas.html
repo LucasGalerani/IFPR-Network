@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IF Network - Minhas Perguntas</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+  </head>
+  <style>
+    #titleClick {
+      cursor: pointer;
+    }
+  </style>
+  <body>
+    <header>
+      <img
+        src="{{ url_for('static', filename='images/logo.png') }}"
+        alt="Logo"
+      />
+      <h1 onclick="redirecionar('/home')" id="titleClick">IF Network</h1>
+      <div class="header-actions">
+        <button id="perfil-header" onclick="redirecionar('/perfil')">
+          <span class="material-symbols-outlined"> account_circle </span>
+        </button>
+        <button id="perguntar-header" onclick="redirecionar('/pergunta')">
+          +
+        </button>
+      </div>
+    </header>
+    <div class="perfil-parent">
+      <div class="perfil-child">
+        <div class="perfil-menu">
+          <div class="perfil-btns">
+            <button onclick="redirecionar('/perfil')">Meu Perfil</button>
+            <button onclick="redirecionar('/minhas_perguntas')">
+              Minhas Perguntas
+            </button>
+            <button onclick="redirecionar('/minhas_respostas')">
+              Minhas Respostas
+            </button>
+          </div>
+          <button id="sair-conta" onclick="sair()">Sair</button>
+        </div>
+        <div class="grid-perguntas"></div>
+      </div>
+    </div>
+    <script>
+      function sair() {
+        document.cookie.split(";").forEach(function (cookie) {
+          const nome = cookie.split("=")[0].trim();
+          document.cookie = `${nome}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+        });
+
+        const numeroMatricula = getCookie("numero_matricula");
+
+        fetch(`/questions/perfil/${numeroMatricula}`);
+
+        window.location.href = "/login";
+      }
+
+      function redirecionar(url) {
+        window.location.href = url;
+      }
+
+      document.addEventListener("DOMContentLoaded", async function () {
+        const numeroMatricula = getCookie("numero_matricula");
+
+        try {
+          const response = await fetch(`/questions/perfil/${numeroMatricula}`);
+          if (!response.ok) throw new Error("Erro ao buscar perguntas");
+
+          const perguntas = await response.json();
+          const gridPerguntas = document.querySelector(".grid-perguntas");
+
+          perguntas.forEach((pergunta) => {
+            const perguntaDiv = document.createElement("div");
+            perguntaDiv.classList.add("container-perfil-respostas");
+            perguntaDiv.setAttribute("id", `pergunta-${pergunta.idpergunta}`);
+
+            perguntaDiv.innerHTML = `
+                        <h1>
+                            <a href="/pergunta_completa/${pergunta.idpergunta}" class="pergunta-link">
+                                ${pergunta.titulo}
+                            </a>
+                        </h1>
+                        <button id="delButton" onclick="removerPergunta(${pergunta.idpergunta})">
+                            <span class="material-symbols-outlined">
+                                delete_forever
+                            </span>
+                        </button>
+                    `;
+
+            gridPerguntas.appendChild(perguntaDiv);
+          });
+        } catch (error) {
+          console.error("Erro ao carregar perguntas:", error);
+        }
+      });
+
+      function removerPergunta(id) {
+        fetch(`/questions/${id}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => {
+            if (response.ok) {
+              const perguntaElement = document.querySelector(`#pergunta-${id}`);
+              if (perguntaElement) {
+                perguntaElement.remove();
+              }
+              console.log("Pergunta removida com sucesso.");
+            } else {
+              console.error("Erro ao remover a pergunta.");
+            }
+          })
+          .catch((error) => {
+            console.error("Erro na requisição:", error);
+          });
+      }
+
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(";").shift();
+      }
+    </script>
+  </body>
+</html>
